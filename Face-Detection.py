@@ -1,53 +1,107 @@
+
+import mediapipe as mp
 import cv2
-import sys
-import logging as log
-import datetime as dt
-from time import sleep
+mp_drawing = mp.solutions.drawing_utils
+mp_holistic = mp.solutions.holistic
 
-cascPath = "haarcascade_frontalface_default.xml"
-faceCascade = cv2.CascadeClassifier(cascPath)
-log.basicConfig(filename='webcam.log',level=log.INFO)
+cap = cv2.VideoCapture(0)
+while cap.isOpened():
+    ret, frame = cap.read()
+    cv2.imshow('Raw Webcam Feed', frame)
 
-video_capture = cv2.VideoCapture(0)
-anterior = 0
-
-while True:
-    if not video_capture.isOpened():
-        print('Unable to load camera.')
-        sleep(5)
-        pass
-
-    # Capture frame-by-frame
-    ret, frame = video_capture.read()
-
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-    faces = faceCascade.detectMultiScale(
-        gray,
-        scaleFactor=1.1,
-        minNeighbors=5,
-        minSize=(30, 30)
-    )
-
-    # Draw a rectangle around the faces
-    for (x, y, w, h) in faces:
-        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-
-    if anterior != len(faces):
-        anterior = len(faces)
-        log.info("faces: "+str(len(faces))+" at "+str(dt.datetime.now()))
-
-
-    # Display the resulting frame
-    cv2.imshow('Video', frame)
-
-
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    if cv2.waitKey(10) & 0xFF == ord('q'):
         break
 
-    # Display the resulting frame
-    cv2.imshow('Video', frame)
+cap.release()
+cv2.destroyAllWindows()
+cap.release()
+cv2.destroyAllWindows()
 
-# When everything is done, release the capture
-video_capture.release()
+cap = cv2.VideoCapture(0)
+# Initiate holistic model
+with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
+    while cap.isOpened():
+        ret, frame = cap.read()
+
+        # Recolor Feed
+        image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        # Make Detections
+        results = holistic.process(image)
+        # print(results.face_landmarks)
+
+        # face_landmarks, pose_landmarks, left_hand_landmarks, right_hand_landmarks
+
+        # Recolor image back to BGR for rendering
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+
+        # Draw face landmarks
+        mp_drawing.draw_landmarks(image, results.face_landmarks, mp_holistic.FACE_CONNECTIONS)
+
+        # Right hand
+        mp_drawing.draw_landmarks(image, results.right_hand_landmarks, mp_holistic.HAND_CONNECTIONS)
+
+        # Left Hand
+        mp_drawing.draw_landmarks(image, results.left_hand_landmarks, mp_holistic.HAND_CONNECTIONS)
+
+        # Pose Detections
+        mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS)
+
+        cv2.imshow('Raw Webcam Feed', image)
+
+        if cv2.waitKey(10) & 0xFF == ord('q'):
+            break
+
+cap.release()
+cv2.destroyAllWindows()
+mp_holistic.POSE_CONNECTIONS
+
+mp_drawing.DrawingSpec(color=(0, 0, 255), thickness=2, circle_radius=2)
+mp_drawing.draw_landmarks
+cap = cv2.VideoCapture(0)
+# Initiate holistic model
+with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
+    while cap.isOpened():
+        ret, frame = cap.read()
+
+        # Recolor Feed
+        image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        # Make Detections
+        results = holistic.process(image)
+        # print(results.face_landmarks)
+
+        # face_landmarks, pose_landmarks, left_hand_landmarks, right_hand_landmarks
+
+        # Recolor image back to BGR for rendering
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+
+        # 1. Draw face landmarks
+        mp_drawing.draw_landmarks(image, results.face_landmarks, mp_holistic.FACE_CONNECTIONS,
+                                  mp_drawing.DrawingSpec(color=(80, 110, 10), thickness=1, circle_radius=1),
+                                  mp_drawing.DrawingSpec(color=(80, 256, 121), thickness=1, circle_radius=1)
+                                  )
+
+        # 2. Right hand
+        mp_drawing.draw_landmarks(image, results.right_hand_landmarks, mp_holistic.HAND_CONNECTIONS,
+                                  mp_drawing.DrawingSpec(color=(80, 22, 10), thickness=2, circle_radius=4),
+                                  mp_drawing.DrawingSpec(color=(80, 44, 121), thickness=2, circle_radius=2)
+                                  )
+
+        # 3. Left Hand
+        mp_drawing.draw_landmarks(image, results.left_hand_landmarks, mp_holistic.HAND_CONNECTIONS,
+                                  mp_drawing.DrawingSpec(color=(121, 22, 76), thickness=2, circle_radius=4),
+                                  mp_drawing.DrawingSpec(color=(121, 44, 250), thickness=2, circle_radius=2)
+                                  )
+
+        # 4. Pose Detections
+        mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS,
+                                  mp_drawing.DrawingSpec(color=(245, 117, 66), thickness=2, circle_radius=4),
+                                  mp_drawing.DrawingSpec(color=(245, 66, 230), thickness=2, circle_radius=2)
+                                  )
+
+        cv2.imshow('Raw Webcam Feed', image)
+
+        if cv2.waitKey(10) & 0xFF == ord('q'):
+            break
+
+cap.release()
 cv2.destroyAllWindows()
